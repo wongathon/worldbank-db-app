@@ -18,7 +18,7 @@ const dbname = "worldbank_db_test";
 const tbl1  = "table_1";
 const tbl2  = "table_2";
 
-//const csvfn  = process.argv[7];
+const csvfn  = "./wbchn.csv";
 
 new Promise((resolve, reject) => {
     csvHeaders({
@@ -73,7 +73,6 @@ new Promise((resolve, reject) => {
             if (field_names !== '') field_names += ',';
             if (qs !== '') qs += ',';
 
-
             if (hdr === 'Indicator_Name') fields += ` ${hdr} varchar(150) not null`;
             if (hdr === 'Indicator_Code') fields += ` ${hdr} varchar(35) not null`;
             if (hdr.substring(0,2) === 'y_') fields += ` ${hdr} real`;
@@ -92,3 +91,67 @@ new Promise((resolve, reject) => {
             })
     });
 })
+.then(context => {
+    return new Promise((resolve, reject) => {
+        fs.createReadStream(csvfn).pipe(parse({
+            delimiter: ',',
+            columns: true,
+            relax_column_count: true
+        }, (err, data) => {
+            if (err) return reject(err);
+            async.eachSeries(data, (datum, next) => {
+        
+                var d = [];
+                try {
+                    context.headers.forEach(hdr => {
+                        d.push(datum[hdr]);
+                    });
+                } catch (e) {
+                    console.error(e.stack);
+                }
+
+                if (d.length > 0) {
+                    //arrays to store columns with data
+                    var unaltArr = context.field_names.split(', ');
+                    var altArr = [];
+                    var datArr = [];
+                    var qs2 = '';
+
+                    d.forEach( (datum, i) => {
+                        //if item is blank
+                        if (datum !== '') {
+                            datArr.push(datum);
+                            altArr.push(unaltArr[i]); 
+                            if (qs2 !== '') qs2 += ',';
+                            qs2 += ' ?';
+                        }
+                    });
+                    var field_names2 = altArr.join(', ');
+
+                    console.log(`${datArr.length} items in D`);
+                    console.log(`about to run INSERT INTO ${tbl1} ( ${field_names2} ) VALUES ( ${qs2} )`);
+
+                    context.db.query(`INSERT INTO ${tbl1} ( ${field_names2} ) VALUES ( ${qs2} )`, datArr, 
+
+                    err => {
+                        if (err) { console.error(err); next(err); }
+                        else setTimeout(() => { next(); });
+                    });
+                } else {
+                    console.log(`empty row ${util.inspect(datum)} ${util.inspect(d)}`);
+                    next();
+                }
+            },
+            err => {
+                if (err) reject(err);
+                else resolve(context);
+            });
+        }));
+    });
+})
+.then(context => { context.db.end(); })
+.catch(err => {console.error(err.stack); });
+
+
+
+

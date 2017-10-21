@@ -3,7 +3,6 @@
 'use strict';
 
 const parse      = require('csv-parse');
-const util       = require('util');
 const fs         = require('fs');
 const path       = require('path');
 const mysql      = require('mysql');

@@ -43,7 +43,7 @@ new Promise((resolve, reject) => {
                 console.error('error connecting: '+ err.stack);
                 reject(err);
             } else {
-                console.log('connection');
+                console.log('Connection to db.');
                 resolve(context);
             }
         });
@@ -79,7 +79,7 @@ new Promise((resolve, reject) => {
         fields2 += `value real, `;
         fields2 += `primary key (indicator_id, year)`;
 
-        console.log("creating tables...");
+        console.log("Creating tables...");
 
         context.db.query(`CREATE TABLE IF NOT EXISTS ${tbl1} ( ${fields1} )`,
             [],
@@ -102,68 +102,41 @@ new Promise((resolve, reject) => {
             relax_column_count: true
         }, (err, data) => {
             if (err) return reject(err);
-            async.eachOfSeries(data, (datum, i, next) => {
-                
-                //console.log(data); //Objects with header: cell data
-                console.log(datum);
+            console.log("Populating tables...")
+            context.dataValues = 0;
+            async.eachOfSeries(data, (datum, dataIndex, next) => {
+                //console.log(datum);
 
-                var d = [];
-                try {
-                    context.headers.forEach(hdr => {
-                        d.push(datum[hdr]);
-                    });
-                } catch (e) {
-                    console.error(e.stack);
-                }
 
-                console.log(context.headers);
+                for (var prop in datum) {
 
-                var nameCode = d.slice(0, 2);
+                    if (datum[prop] !== '' && (prop.substring(0,2) === '19' || prop.substring(0,2) === '20')) {
+                        var yearData = [];
+                        yearData.push(dataIndex + 1);
+                        yearData.push(prop);
+                        yearData.push(datum[prop]);
+
+                        //console.log(yearData);
+                        context.dataValues += 1;
+
+                        context.db.query(`INSERT INTO ${tbl2} ( indicator_id, year, value ) VALUES ( ?, ?, ? )`, yearData, 
+                            err => {
+                                if (err) { console.error(err); next(err); }
+                        }); 
+                    };
+                };
+
+                var nameCode = []; //grab attributes: indicator, indicator name
+                nameCode.push(datum["Indicator Name"]);
+                nameCode.push(datum["Indicator Code"]);
+
                 context.db.query(`INSERT INTO ${tbl1} ( name, code ) VALUES ( ?, ? )`, nameCode, 
                     err => {
                         if (err) { console.error(err); next(err); }
-                        else setTimeout(() => { });
+                        else setTimeout(() => { next(); });
                     });
 
-                // var yearVal = [];
-                // yearVal.push(i+1);
-
-                // try {
-                //     context.headers.forEach(hdr => {
-
-                //     });
-                // } catch (e) {
-                //     console.error(e.stack);
-                // }
-
-
-                // context.db.query(`INSERT INTO ${tbl2} ( indicator_id, year, value ) VALUES ( ?, ?, ? )`, yearVal, 
-                //     err => {
-                //         if (err) { console.error(err); next(err); }
-                //         else setTimeout(() => { next(); });
-                //     });
-
-
-                // //arrays to store columns with data
-                // var unaltArr = context.field_names.split(', ');
-                // var altArr = [];
-                // var datArr = [];
-                // var qs2 = '';
-
-                // d.forEach( (datum, i) => {
-                //     //if item is blank
-                //     if (datum !== '') {
-                //         datArr.push(datum);
-                //         altArr.push(unaltArr[i]); 
-                //         if (qs2 !== '') qs2 += ',';
-                //         qs2 += ' ?';
-                //     }
-                // });
-                // var field_names2 = altArr.join(', ');
-
-                // console.log(`${datArr.length} items in D`);
-
-
+                context.dataIndex = dataIndex;
 
             },
             err => {
@@ -173,7 +146,11 @@ new Promise((resolve, reject) => {
         }));
     });
 })
-.then(context => { context.db.end(); })
+.then(context => { 
+    context.db.end(); 
+    console.log(`Added ${context.dataIndex.toLocaleString()} indicators.`);
+    console.log(`Entered ${context.dataValues.toLocaleString()} data points.`);
+})
 .catch(err => {console.error(err.stack); });
 
 

@@ -66,27 +66,32 @@ new Promise((resolve, reject) => {
 })
 .then(context => {
     return new Promise((resolve, reject) => {
-        var fields1 = '';
-        var fields2 = '';
+        var fields = '';
+        var field_names = '';
+        var qs = '';
 
-        fields1 += `id int not null auto_increment, `;
-        fields1 += `name varchar(150) not null, `;
-        fields1 += `code varchar(35) not null, `;
-        fields1 += `primary key (id)`;
+        fields += `id INT NOT NULL AUTO_INCREMENT,`;
 
-        fields2 += `indicator_id int not null, `;
-        fields2 += `year int not null, `;
-        fields2 += `value real, `;
-        fields2 += `primary key (indicator_id, year)`;
+        context.headers.forEach(hdr => {
 
-        console.log("creating tables...");
+            hdr = hdr.replace(' ', '_');
+            if (hdr.length === 4 && hdr.substring(0,2) === '19' || hdr.substring(0,2) === '20') hdr = 'y_' + hdr;
 
-        context.db.query(`CREATE TABLE IF NOT EXISTS ${tbl1} ( ${fields1} )`,
-            [],
-            err => {
-                if (err) reject(err);
-            });
-        context.db.query(`CREATE TABLE IF NOT EXISTS ${tbl2} ( ${fields2} )`,
+            if (fields !== '') fields += ',';
+            if (field_names !== '') field_names += ',';
+            if (qs !== '') qs += ',';
+
+            if (hdr === 'Indicator_Name') fields += ` ${hdr} varchar(150) not null`;
+            if (hdr === 'Indicator_Code') fields += ` ${hdr} varchar(35) not null`;
+            if (hdr.substring(0,2) === 'y_') fields += ` ${hdr} real`;
+            
+            field_names += ` ${hdr}`;
+            qs += ' ?';
+        });
+        context.qs = qs;
+        context.field_names = field_names;
+        console.log(`about to create CREATE TABLE IF NOT EXISTS ${tbl1} ( ${fields} )`);
+        context.db.query(`CREATE TABLE IF NOT EXISTS ${tbl1} ( ${fields} )`,
             [],
             err => {
                 if (err) reject(err);
@@ -102,11 +107,8 @@ new Promise((resolve, reject) => {
             relax_column_count: true
         }, (err, data) => {
             if (err) return reject(err);
-            async.eachOfSeries(data, (datum, i, next) => {
-                
-                //console.log(data); //Objects with header: cell data
-                console.log(datum);
-
+            async.eachSeries(data, (datum, next) => {
+        
                 var d = [];
                 try {
                     context.headers.forEach(hdr => {
@@ -116,55 +118,37 @@ new Promise((resolve, reject) => {
                     console.error(e.stack);
                 }
 
-                console.log(context.headers);
+                if (d.length > 0) {
+                    //arrays to store columns with data
+                    var unaltArr = context.field_names.split(', ');
+                    var altArr = [];
+                    var datArr = [];
+                    var qs2 = '';
 
-                var nameCode = d.slice(0, 2);
-                context.db.query(`INSERT INTO ${tbl1} ( name, code ) VALUES ( ?, ? )`, nameCode, 
+                    d.forEach( (datum, i) => {
+                        //if item is blank
+                        if (datum !== '') {
+                            datArr.push(datum);
+                            altArr.push(unaltArr[i]); 
+                            if (qs2 !== '') qs2 += ',';
+                            qs2 += ' ?';
+                        }
+                    });
+                    var field_names2 = altArr.join(', ');
+
+                    console.log(`${datArr.length} items in D`);
+                    console.log(`about to run INSERT INTO ${tbl1} ( ${field_names2} ) VALUES ( ${qs2} )`);
+
+                    context.db.query(`INSERT INTO ${tbl1} ( ${field_names2} ) VALUES ( ${qs2} )`, datArr, 
+
                     err => {
                         if (err) { console.error(err); next(err); }
-                        else setTimeout(() => { });
+                        else setTimeout(() => { next(); });
                     });
-
-                // var yearVal = [];
-                // yearVal.push(i+1);
-
-                // try {
-                //     context.headers.forEach(hdr => {
-
-                //     });
-                // } catch (e) {
-                //     console.error(e.stack);
-                // }
-
-
-                // context.db.query(`INSERT INTO ${tbl2} ( indicator_id, year, value ) VALUES ( ?, ?, ? )`, yearVal, 
-                //     err => {
-                //         if (err) { console.error(err); next(err); }
-                //         else setTimeout(() => { next(); });
-                //     });
-
-
-                // //arrays to store columns with data
-                // var unaltArr = context.field_names.split(', ');
-                // var altArr = [];
-                // var datArr = [];
-                // var qs2 = '';
-
-                // d.forEach( (datum, i) => {
-                //     //if item is blank
-                //     if (datum !== '') {
-                //         datArr.push(datum);
-                //         altArr.push(unaltArr[i]); 
-                //         if (qs2 !== '') qs2 += ',';
-                //         qs2 += ' ?';
-                //     }
-                // });
-                // var field_names2 = altArr.join(', ');
-
-                // console.log(`${datArr.length} items in D`);
-
-
-
+                } else {
+                    console.log(`empty row ${util.inspect(datum)} ${util.inspect(d)}`);
+                    next();
+                }
             },
             err => {
                 if (err) reject(err);

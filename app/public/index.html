@@ -34,14 +34,14 @@
 			<h4>Select Year Range (<span>1960-2012</span>)</h4>
 			<div>
 				<label for="year_start">Start Year</label>
-				<input type="number" id="year_start" name="indicator_start" min="1960" max="2012"/>
+				<input type="number" id="year_start" name="indicator_start" value='1960' min="1960" max="2012"/>
 			</div>
 			<div>
 				<label for="year_end">End Year</label>
-				<input type="number" id="year_end" name="indicator_end" min="1960" max="2012"/>
+				<input type="number" id="year_end" name="indicator_end" value='1965' min="1960" max="2012"/>
 			</div>
 			<div class="button">
-	  		<button type="submit">Find Data</button>
+	  		<button id="year_submit" type="submit">Find Data</button>
 			</div>
 			<p hidden>Error: end year must be after start year</p>
 		</form>
@@ -50,16 +50,17 @@
 
 	<hr></hr>
 	<br>
+	<button id="alert">How many selected?</button>
+	<br>
 	<table id="indicator_table" class="display nowrap" cellspacing="0" width="100%">
     <thead>
-        <tr>
+        <tr id="t_headers">
             <th>Indicator Name</th>
             <th>Indicator Code</th>
-
         </tr>
     </thead>
     <tbody id="data-area">
-    	</tbody>
+    </tbody>
 	</table>
 
 	<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>

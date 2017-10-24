@@ -25,10 +25,10 @@ module.exports = function(app) {
     });
   });
 
-  app.post('/api/year_range', (req, res) => {
-    
-    var b = req.body; 
-    if (b.indicator_start > b.indicator_end){
+  app.get('/api/year_range', (req, res) => {
+    var params = req.query; 
+    console.log(params);    
+    if (params.yearStart > params.yearEnd){
       console.error("Start year is less than end!");
     } else {
       var q = "select distinct i.id, i.name, i.code ";

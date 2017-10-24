@@ -1,5 +1,7 @@
 #!/usr/bin/env node
 
+//based on https://techsparx.com/nodejs/howto/csv2mysql.html
+
 'use strict';
 
 const parse      = require('csv-parse');
@@ -10,19 +12,18 @@ const mysql      = require('mysql');
 const async      = require('async');
 const csvHeaders = require('csv-headers');
 
-
+//change to process argvs'
 const dbhost = "localhost";
 const dbuser = "root";
 const dbpass = "";
 const dbname = "worldbank_db_test";
 const tbl1  = "indicator";
 const tbl2  = "indicator_value";
-
 const csvfn  = "./wbchn.csv";
 
 new Promise((resolve, reject) => {
     csvHeaders({
-        file      : "./wbchn.csv",
+        file      : csvfn,
         delimiter : ','
     }, function(err, headers) {
         if (err) reject(err);

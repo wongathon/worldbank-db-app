@@ -10,18 +10,18 @@ const async      = require('async');
 const csvHeaders = require('csv-headers');
 
 
+//change to process.argvs
 const dbhost = "localhost";
 const dbuser = "root";
 const dbpass = "";
 const dbname = "worldbank_db_test";
 const tbl1  = "indicator";
 const tbl2  = "indicator_value";
-
 const csvfn  = "./wbchn.csv";
 
 new Promise((resolve, reject) => {
     csvHeaders({
-        file      : "./wbchn.csv",
+        file      : csfvn,
         delimiter : ','
     }, function(err, headers) {
         if (err) reject(err);
@@ -105,38 +105,53 @@ new Promise((resolve, reject) => {
             context.dataValues = 0;
             async.eachOfSeries(data, (datum, dataIndex, next) => {
                 //console.log(datum);
-
-
-                for (var prop in datum) {
-
-                    if (datum[prop] !== '' && (prop.substring(0,2) === '19' || prop.substring(0,2) === '20')) {
-                        var yearData = [];
-                        yearData.push(dataIndex + 1);
-                        yearData.push(prop);
-                        yearData.push(datum[prop]);
-
-                        //console.log(yearData);
-                        context.dataValues += 1;
-
-                        context.db.query(`INSERT INTO ${tbl2} ( indicator_id, year, value ) VALUES ( ?, ?, ? )`, yearData, 
-                            err => {
-                                if (err) { console.error(err); next(err); }
-                        }); 
-                    };
-                };
-
-                var nameCode = []; //grab attributes: indicator, indicator name
+                // BEGIN Transation.  If the transaction fails, able to rollback any modifications within the transaction
+                context.db.beginTransaction((err) => {
+                var nameCode = []; 
                 nameCode.push(datum["Indicator Name"]);
                 nameCode.push(datum["Indicator Code"]);
 
-                context.db.query(`INSERT INTO ${tbl1} ( name, code ) VALUES ( ?, ? )`, nameCode, 
-                    err => {
-                        if (err) { console.error(err); next(err); }
-                        else setTimeout(() => { next(); });
-                    });
+                context.db.query(`INSERT INTO ${tbl1} (name, code) VALUES (?,?)`, nameCode, (err, result) => {
+                      // rollback on error.  Maybe log the error and keep the row number that failed for reporting later
+                    context.dataIndex = dataIndex;
 
-                context.dataIndex = dataIndex;
+                    if (err) {
+                        console.error(err);
+                        context.db.rollback((err) => {
+                                console.error(err);
+                                next(err);
+                            });
+                    } else {
+                      // use result.insertId to insert each year
+                        for (var prop in datum) {
+                            if (datum[prop] !== '' && (prop.substring(0,2) === '19' || prop.substring(0,2) === '20')) {
+                            var yearData = [];
+                            yearData.push(result.insertId);
+                            yearData.push(prop);
+                            yearData.push(datum[prop]);
+                            context.dataValues += 1;
 
+                            context.db.query(`INSERT INTO ${tbl2} ( indicator_id, year, value ) VALUES ( ?, ?, ? )`, yearData, 
+                                                err => { if (err) { 
+                                                    console.error(err); context.db.rollback((err) => {throw err;}); 
+                                                    throw err;}
+                                                });  
+                            }
+                        }
+                       // no errors by this row...commit the transaction
+                        context.db.commit((err) => {
+                            if (err) {
+                                console.error(err);
+                                context.db.rollback((err) => {
+                                    console.error(err);
+                                    next(err);
+                                });
+                            } else setTimeout(() => { next(); });
+                        });
+                    }
+                })
+                
+                });//END Transaction
             },
             err => {
                 if (err) reject(err);
@@ -147,7 +162,7 @@ new Promise((resolve, reject) => {
 })
 .then(context => { 
     context.db.end(); 
-    console.log(`Added ${context.dataIndex.toLocaleString()} indicators.`);
+    console.log(`Added ${(context.dataIndex+1).toLocaleString()} indicators and associated codes.`);
     console.log(`Entered ${context.dataValues.toLocaleString()} data points.`);
 })
 .catch(err => {console.error(err.stack); });

@@ -4,13 +4,72 @@
 	<meta charset="UTF-8">
 	<title>World Bank Database</title>
 
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
-    <link rel="stylesheet" type="text/css" href="css/style.css">
+<!-- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/css/bootstrap.min.css" integrity="sha384-rwoIResjU2yc3z8GV/NPeZWAv56rSmLldC3R/AZzGRnGxQQKnKkoFVhFQhNUwEyJ" crossorigin="anonymous"> -->
+
+	<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.16/css/jquery.dataTables.min.css">
+  <link rel="stylesheet" type="text/css" href="/css/style.css">
 
 </head>
 <body>
 
-	  <script type="text/javascript" src="js/logic.js"></script>
+	<h1>Simple WB indicators display app</h1>
+	<div id="form_container">
+<!-- 		<form id="i_search" action="/api/:indicator" method="post">
+			<h4>Add Indicators</h4>
+			<div>
+				<label for="description">Indicator Name</label>
+				<input type="text" id="description" name="indicator_name" />
+			</div>
+			<div>
+				<label for="code">Code</label>
+				<input type="text" id="code" name="indicator_code" />
+			</div>
+
+			<div class="button">
+	  		<button type="submit">Find Indicator</button>
+			</div>
+		</form> -->
+
+		<form id="year_select" action="/api/year_range" method="post">
+			<h4>Select Year Range (<span>1960-2012</span>)</h4>
+			<div>
+				<label for="year_start">Start Year</label>
+				<input type="number" id="year_start" name="indicator_start" min="1960" max="2012"/>
+			</div>
+			<div>
+				<label for="year_end">End Year</label>
+				<input type="number" id="year_end" name="indicator_end" min="1960" max="2012"/>
+			</div>
+			<div class="button">
+	  		<button type="submit">Find Data</button>
+			</div>
+			<p hidden>Error: end year must be after start year</p>
+		</form>
+	</div>
+
+
+	<hr></hr>
+	<br>
+	<table id="indicator_table" class="display nowrap" cellspacing="0" width="100%">
+    <thead>
+        <tr>
+            <th>Indicator Name</th>
+            <th>Indicator Code</th>
+
+        </tr>
+    </thead>
+    <tbody id="data-area">
+    	</tbody>
+	</table>
+
+	<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4=" crossorigin="anonymous"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/tether/1.4.0/js/tether.min.js" integrity="sha384-DztdAPBWPRXSA/3eYEEUWrWCy7G5KFbe8fFjk5JAIxUYHKkDx6Qin1DkWx51bBrb" crossorigin="anonymous"></script>
+
+	<script src="https://cdn.datatables.net/1.10.16/js/jquery.dataTables.min.js" ></script>
+
+	<script type="text/javascript" src="/js/logic.js"></script>
+
+<!-- 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-alpha.6/js/bootstrap.min.js" integrity="sha384-vBWWzlZJ8ea9aCX4pEW3rVHjgjt7zpkNpZk+02D9phzyeVkE+jo0ieGizqPLForn" crossorigin="anonymous"></script> -->
+
 </body>
 </html>

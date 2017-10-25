@@ -1,6 +1,6 @@
-CREATE database worldbank_db;
+CREATE database worldbank_db_test;
 
-USE worldbank_db;
+USE worldbank_db_test;
 
 CREATE TABLE indicator (
 	id int not null auto_increment,

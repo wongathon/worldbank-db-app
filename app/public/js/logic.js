@@ -1,11 +1,13 @@
 $(document).ready(function() {
 
-  var newDataTable = () => { 
+  var newDataTable = (dataSet, columnD) => { 
     $('#indicator_table').DataTable({
       "scrollY": 500,
       "scrollX": true,
       "pageLength": 19,
-      "order": []
+      "order": [],
+      "data": dataSet,
+      "columns": columnD
   })};
 
   var indicatorDataCopy = [];
@@ -16,27 +18,111 @@ $(document).ready(function() {
     if (data.length !== 0) {
       //console.log(data);
       indicatorDataCopy = data.slice();
-      refreshTableNoYears(data);
+      refreshTable(data);
     }
   });
 
-  var refreshTableNoYears = (d) => {
-    var s = true;
-      for (var i = 0; i < d.length; i++) {
-        var ind = $("<tr>").attr('role', 'row').attr('id', d[i].id);
-        if ( s === true ) {
-          ind.attr('class', 'odd');
-          s = false; 
-        } else {
-          ind.attr('class', 'even');
-          s = true;
-        };
-        var iName = $("<td>" + d[i].name + "</td>").attr('class', 'sorting_1');
-        ind.append(iName);
-        ind.append("<td>" + d[i].code + "</td>");
-        $("#data-area").append(ind);
+  var refreshTable = (d, years) => {
+
+    //$('#indicator_table').DataTable().destroy();
+
+
+    //console.log(d);
+    var selectedYears = [];
+
+    if (years) {
+      var firstY = $('#year_start').val();
+      var lastY = $('#year_end').val();
+      for (var j = parseInt(firstY); j <= lastY; j++) {
+        selectedYears.push(j);
       }
-    newDataTable();
+
+      var datGapArr = [];
+      var uniqueIds = [];
+      var yArr = selectedYears.slice();
+      var dataYears = [];
+      var dataVals = [];
+      var counter = 0;
+      var data = [];
+
+      d.forEach((item, i, arrayItems)=>{
+        if (!uniqueIds.includes(item['id'])){
+          uniqueIds.push(item['id']);
+          dataYears = [];
+          dataVals = [];
+          counter = 0;
+          data = [];
+          data.push(item["id"]);
+          data.push(item["name"]);
+          data.push(item["code"]);
+        } 
+        
+        dataYears.push(item['year']);
+        dataVals.push(item['value']);
+        
+        if (arrayItems[i+1] === undefined || !uniqueIds.includes(arrayItems[i+1]['id'])){
+          for (var i=0; i < yArr.length; i++){
+            if (!dataYears.includes(yArr[i])){
+              dataYears.splice(i, 0, 'not');
+              dataVals.splice(i, 0, "none");
+            }
+          }
+          data = data.concat(dataVals);
+          datGapArr.push(data);
+        }
+      });
+
+
+      console.log(datGapArr);
+
+
+      var indYearCols = [];
+      indYearCols.push({title: "id", visible: false});
+      indYearCols.push({title: "Indicator Name"});
+      indYearCols.push({title: "Indicator Code"});
+      selectedYears.forEach((year)=>{
+        var yearHeader = {};
+        yearHeader.title = year.toString();
+        indYearCols.push(yearHeader);
+      });
+
+      console.log(indYearCols);
+
+      $('#t_headers tr').html('');
+      for (var i=0; i<indYearCols.length; i++){
+        $('#t_headers tr').append("<th>");
+        console.log("times:"+i);
+      }
+
+      $('#indicator_table').DataTable().destroy();
+      $("#data-area").html("");
+    
+      newDataTable(datGapArr, indYearCols);
+
+    } else if (!years) {
+      var datArr = [];
+
+      d.forEach((item)=>{
+        var data = [];
+        data.push(item["id"]);
+        data.push(item["name"]);
+        data.push(item["code"]);
+        datArr.push(data);
+      });
+      
+      var indCols = [];
+      indCols.push({title: "id", visible: false});
+      indCols.push({title: "Indicator Name"});
+      indCols.push({title: "Indicator Code"});
+
+      $('#t_headers tr').html('');
+      for (var i=0; i<indCols.length; i++){
+        $('#t_headers tr').append("<th>");
+      }
+
+      $('#indicator_table').DataTable().destroy();
+      newDataTable(datArr, indCols);
+    }
   }
 
   $('#indicator_table tbody').on( 'click', 'tr', function () {
@@ -44,14 +130,17 @@ $(document).ready(function() {
     $(this).toggleClass('selected');
   });
 
-  $('#alert').click( function () {
+  $('#alert').click( () => {
     //tests
     //alert( $('#indicator_table').dataTable().api().rows('.selected').data().length +' row(s) selected' );
-    //console.log($('#indicator_table').dataTable().api().rows('.selected').data()); 
+    console.log($('#indicator_table').dataTable().api().rows('.selected').data()); 
     selectedIds = [];
-    $('#indicator_table').dataTable().api().rows('.selected').data().each( item => { selectedIds.push(item["DT_RowId"]) });
+    $('#indicator_table').dataTable().api().rows('.selected').data().each( item => { selectedIds.push(item[0]) });
     alert("you will pull data from " + selectedIds);
+  });
 
+  $('#refresh-btn').click( () => {
+    location.reload(); 
   });
 
   $('#year_submit').click(function(e){
@@ -60,7 +149,7 @@ $(document).ready(function() {
     var yearStart = $('#year_start').val();
     var yearEnd = $('#year_end').val();
     selectedIds = [];
-    $('#indicator_table').dataTable().api().rows('.selected').data().each( item => { selectedIds.push(item["DT_RowId"]) });
+    $('#indicator_table').dataTable().api().rows('.selected').data().each( item => { selectedIds.push(item[0]) });
     
     if (selectedIds.length < 1) {
       alert("You must select some indicators!");
@@ -68,9 +157,8 @@ $(document).ready(function() {
       alert("You must have start year be less than end year!");
       $('#year_end').val('');
     } else {
-      selectedIds = [];
-      $('#indicator_table').dataTable().api().rows('.selected').data().each( item => { selectedIds.push(item["DT_RowId"]) });
-      console.log(yearStart, yearEnd, selectedIds);
+
+      console.log("query with this info: " + yearStart, yearEnd, selectedIds);
 
       jQuery.get('/api/year_range', 
         {
@@ -79,25 +167,9 @@ $(document).ready(function() {
           selectedIds: selectedIds
         }, 
         function(data) {
-
+          //console.log(data);
+          refreshTable(data, true);
         });
     }
   });
-
-
-
-
-  //WIP Get all indicator AND Data. Too big!
-  // jQuery.get('/api/indicator_data', function(data){
-  //   if (data.length !== 0) {
-  //     console.log(data);
-  //     for (var i = 0; i < data.length; i++) {
-  //       var datum = 
-  //     }
-
-  //   }
-  // });
-
-
-
 });

@@ -11,9 +11,7 @@ module.exports = function(app) {
     });
   });
 
-//GET indicator_values for indicator_id
-//app.get('api/indicators/:id')
-
+  //GET for ALL. Too slow to use. 
   app.get('/api/indicator_dataXXX', (req, res) => {
     var q = "SELECT indicator.name, indicator.code,";
     q += "indicator_value.value ";
@@ -31,15 +29,22 @@ module.exports = function(app) {
     if (params.yearStart > params.yearEnd){
       console.error("Start year is less than end!");
     } else {
-      var q = "select distinct i.id, i.name, i.code ";
+
+      var q = "select distinct i.id, i.name, i.code, iv.year, iv.value ";
       q += "from indicator i, indicator_value iv ";
-      q += "where i.id = iv.indicator_id and iv.year > " + b.indicator_start;
+      q += "where i.id IN (" +params.selectedIds+ ") and iv.indicator_id = i.id and iv.year >= " + params.yearStart + " and iv.year <= " + params.yearEnd;
+      console.log("about to call "+ q);
       connection.query(q, (err, result) => {
+        if (err) console.log(err);
         res.json(result);
       });
     }
 
   });
+
+
+//GET indicator_values for indicator_id
+//app.get('api/indicators/:id')
 //app.post('api/indicators/new')
 //app.post('api/ind_val/new')
 

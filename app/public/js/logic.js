@@ -59,7 +59,7 @@ $(document).ready(function() {
           for (var i=0; i < yArr.length; i++){
             if (!dataYears.includes(yArr[i])){
               dataYears.splice(i, 0, 'not');
-              dataVals.splice(i, 0, "none");
+              dataVals.splice(i, 0, "-");
             }
           }
           data = data.concat(dataVals);

@@ -16,7 +16,6 @@ $(document).ready(function() {
   //on-start
   jQuery.get('/api/indicators', function(data) {
     if (data.length !== 0) {
-      //console.log(data);
       indicatorDataCopy = data.slice();
       refreshTable(data);
     }
@@ -24,10 +23,6 @@ $(document).ready(function() {
 
   var refreshTable = (d, years) => {
 
-    //$('#indicator_table').DataTable().destroy();
-
-
-    //console.log(d);
     var selectedYears = [];
 
     if (years) {
@@ -73,9 +68,6 @@ $(document).ready(function() {
       });
 
 
-      console.log(datGapArr);
-
-
       var indYearCols = [];
       indYearCols.push({title: "id", visible: false});
       indYearCols.push({title: "Indicator Name"});
@@ -86,19 +78,16 @@ $(document).ready(function() {
         indYearCols.push(yearHeader);
       });
 
-      console.log(indYearCols);
-
       $('#t_headers tr').html('');
       for (var i=0; i<indYearCols.length; i++){
         $('#t_headers tr').append("<th>");
-        console.log("times:"+i);
       }
 
-    $('#indicator_table').DataTable().destroy();
-    $("#data-area").html("");
-    $('#t_headers').html("");
-    
-    newDataTable(datGapArr, indYearCols);
+      $('#indicator_table').DataTable().destroy();
+      $("#data-area").html("");
+      $('#t_headers').html("");
+      
+      newDataTable(datGapArr, indYearCols);
 
     } else if (!years) {
       var datArr = [];
@@ -127,7 +116,6 @@ $(document).ready(function() {
   }
 
   $('#indicator_table tbody').on( 'click', 'tr', function () {
-    //console.log(this);
     $(this).toggleClass('selected');
   });
 
@@ -168,7 +156,6 @@ $(document).ready(function() {
           selectedIds: selectedIds
         }, 
         function(data) {
-          //console.log(data);
           refreshTable(data, true);
         });
     }

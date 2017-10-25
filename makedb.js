@@ -21,7 +21,7 @@ const csvfn  = "./wbchn.csv";
 
 new Promise((resolve, reject) => {
     csvHeaders({
-        file      : csfvn,
+        file      : csvfn,
         delimiter : ','
     }, function(err, headers) {
         if (err) reject(err);

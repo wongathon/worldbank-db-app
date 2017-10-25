@@ -94,10 +94,11 @@ $(document).ready(function() {
         console.log("times:"+i);
       }
 
-      $('#indicator_table').DataTable().destroy();
-      $("#data-area").html("");
+    $('#indicator_table').DataTable().destroy();
+    $("#data-area").html("");
+    $('#t_headers').html("");
     
-      newDataTable(datGapArr, indYearCols);
+    newDataTable(datGapArr, indYearCols);
 
     } else if (!years) {
       var datArr = [];
@@ -119,7 +120,7 @@ $(document).ready(function() {
       for (var i=0; i<indCols.length; i++){
         $('#t_headers tr').append("<th>");
       }
-
+      console.log(indCols);
       $('#indicator_table').DataTable().destroy();
       newDataTable(datArr, indCols);
     }

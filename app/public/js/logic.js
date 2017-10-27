@@ -13,7 +13,7 @@ $(document).ready(function() {
   var indicatorDataCopy = [];
   var selectedIds = [];
 
-  //on-start
+  //On-start
   jQuery.get('/api/indicators', function(data) {
     if (data.length !== 0) {
       indicatorDataCopy = data.slice();
@@ -21,6 +21,10 @@ $(document).ready(function() {
     }
   });
 
+  //HELPER FUNCTIONS
+  //refactor helper functions
+
+  //DATA-HANDLING FUNCTION
   var refreshTable = (d, years) => {
 
     var selectedYears = [];
@@ -67,7 +71,6 @@ $(document).ready(function() {
         }
       });
 
-
       var indYearCols = [];
       indYearCols.push({title: "id", visible: false});
       indYearCols.push({title: "Indicator Name"});
@@ -77,6 +80,20 @@ $(document).ready(function() {
         yearHeader.title = year.toString();
         indYearCols.push(yearHeader);
       });
+
+      var missingIds = $(selectedIds).not(uniqueIds).get();
+
+      if (missingIds) {
+        jQuery.get('/api/indicators/ids', {missingIds: missingIds}, (data) => {
+          var missItems = '';
+          data.forEach(d => {
+            if (missItems !== '') missItems += ',';
+            missItems += ` ${d.code}`
+          });
+          var mes = `Missing data for indicators: ${missItems}`
+          $('#errors').prepend('<div class="alert"><p class="alert-text">'+mes+'</p></div>');
+        });
+      };
 
       $('#t_headers tr').html('');
       for (var i=0; i<indYearCols.length; i++){
@@ -109,12 +126,14 @@ $(document).ready(function() {
       for (var i=0; i<indCols.length; i++){
         $('#t_headers tr').append("<th>");
       }
-      console.log(indCols);
+      //console.log(indCols);
       $('#indicator_table').DataTable().destroy();
       newDataTable(datArr, indCols);
     }
   }
 
+
+  //CLICK-EVENTS
   $('#indicator_table tbody').on( 'click', 'tr', function () {
     $(this).toggleClass('selected');
   });
@@ -133,22 +152,18 @@ $(document).ready(function() {
   });
 
   $('#year_submit').click(function(e){
-
     e.preventDefault();
     var yearStart = $('#year_start').val();
     var yearEnd = $('#year_end').val();
     selectedIds = [];
     $('#indicator_table').dataTable().api().rows('.selected').data().each( item => { selectedIds.push(item[0]) });
-    
     if (selectedIds.length < 1) {
       alert("You must select some indicators!");
     } else if (yearStart > yearEnd) {
       alert("You must have start year be less than end year!");
       $('#year_end').val('');
     } else {
-
       console.log("query with this info: " + yearStart, yearEnd, selectedIds);
-
       jQuery.get('/api/year_range', 
         {
           yearStart: yearStart,
@@ -156,8 +171,10 @@ $(document).ready(function() {
           selectedIds: selectedIds
         }, 
         function(data) {
+          //console.log(data);
           refreshTable(data, true);
         });
     }
   });
+
 });

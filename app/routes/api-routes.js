@@ -11,6 +11,14 @@ module.exports = function(app) {
     });
   });
 
+  app.get('/api/indicators/ids', (req, res) => {
+    var params = req.query;
+    var q = "select * from indicator where indicator.id in (" +params.missingIds+ ")";
+    connection.query(q, (err, result) => {
+      res.json(result);
+    });
+  });
+
   //GET for ALL. Too slow to use. 
   app.get('/api/indicator_dataXXX', (req, res) => {
     var q = "SELECT indicator.name, indicator.code,";

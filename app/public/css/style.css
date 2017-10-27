@@ -7,6 +7,14 @@ div.dataTables_wrapper {
   text-align: center;
 }
 
+div.alert {
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid #F00;
+  background-color: #FFE5E5;
+  color: #F00;
+}
+
 form {
   /* Just to center the form on the page */
   margin: 0 auto;

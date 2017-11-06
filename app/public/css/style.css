@@ -8,7 +8,7 @@ div.dataTables_wrapper {
 }
 
 div.alert {
-  margin: 10px;
+  margin: 10px 200px;
   padding: 10px;
   border: 1px solid #F00;
   background-color: #FFE5E5;

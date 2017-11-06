@@ -2,12 +2,14 @@ $(document).ready(function() {
 
   var newDataTable = (dataSet, columnD) => { 
     $('#indicator_table').DataTable({
-      "scrollY": 500,
-      "scrollX": true,
-      "pageLength": 19,
-      "order": [],
-      "data": dataSet,
-      "columns": columnD
+      scrollY: 500,
+      scrollX: true,
+      pageLength: 19,
+      order: [],
+      data: dataSet,
+      columns: columnD,
+      dom: 'B<"wrapper"flipt>',
+      buttons: ['excel', 'csv']
   })};
 
   var indicatorDataCopy = [];
@@ -175,6 +177,16 @@ $(document).ready(function() {
           refreshTable(data, true);
         });
     }
+  });
+
+  $('#find_all').click(function(e){
+    e.preventDefault();
+    jQuery.get('/api/indicators/all', data=>{
+      console.log('got all data!')
+      $('#year_start').val('1960')
+      $('#year_end').val('2012')
+      refreshTable(data, true)
+    })
   });
 
 });
